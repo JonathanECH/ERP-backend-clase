@@ -14,11 +14,11 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.4.2",
+      "version": "12.8.1",
       "onFail": "download"
     }
   },
-  "packageManager": "pnpm@12.4.2",
+  "packageManager": "pnpm@12.8.1",
   "type": "module",
   "dependencies": {
     "cors": "^2.8.6",
