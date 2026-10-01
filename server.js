@@ -3,7 +3,7 @@ import cors from 'cors';
 import pool from './config/db.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 
 // Middlewares
 app.use(cors()); // Permite conexiones desde Vue (puerto 5173 / 5174)
@@ -56,20 +56,20 @@ app.get('/api/contactos/:id', async (req, res) => {
 // 3. Crear un nuevo contacto
 app.post('/api/contactos', async (req, res) => {
   const { nombre, rfc, tipo, email, telefono } = req.body;
-  
+
   if (!nombre || !rfc || !tipo) {
     return res.status(400).json({
       exito: false,
       mensaje: 'Todos los campos obligatorios deben estar presentes (nombre, rfc, tipo)'
     });
   }
-  
+
   try {
     const [resultado] = await pool.query(
       'INSERT INTO contactos (nombre, rfc, tipo, email, telefono) VALUES (?, ?, ?, ?, ?)',
       [nombre, rfc, tipo, email || null, telefono || null]
     );
-    
+
     res.status(201).json({
       exito: true,
       mensaje: 'Contacto creado exitosamente',
@@ -161,7 +161,21 @@ app.delete('/api/contactos/:id', async (req, res) => {
 // 1. Obtener todos los movimientos
 app.get('/api/movimientos', async (req, res) => {
   try {
-    const [filas] = await pool.query('SELECT * FROM movimientos ORDER BY id DESC');
+    const { tipo } = req.query; // Capturamos el parámetro de la URL (?tipo=...)
+    
+    let query = 'SELECT * FROM movimientos';
+    let params = [];
+
+    // Si viene el parámetro 'tipo', agregamos la condición WHERE
+    if (tipo) {
+      query += ' WHERE tipo = ?';
+      params.push(tipo);
+    }
+    
+    query += ' ORDER BY id DESC';
+
+    const [filas] = await pool.query(query, params);
+    
     res.status(200).json({
       exito: true,
       datos: filas
@@ -175,24 +189,25 @@ app.get('/api/movimientos', async (req, res) => {
   }
 });
 
+
 // 2. Crear un nuevo movimiento
 app.post('/api/movimientos', async (req, res) => {
   const { concepto, tipo, monto, fecha, contacto_id } = req.body;
-  
+
   if (!concepto || !tipo || !monto) {
     return res.status(400).json({
       exito: false,
       mensaje: 'Campos obligatorios: concepto, tipo, monto'
     });
   }
-  
+
   if (!['Ingreso', 'Egreso'].includes(tipo)) {
     return res.status(400).json({
       exito: false,
       mensaje: 'El tipo debe ser "Ingreso" o "Egreso"'
     });
   }
-  
+
   const montoNumerico = parseFloat(monto);
   if (isNaN(montoNumerico) || montoNumerico <= 0) {
     return res.status(400).json({
@@ -200,14 +215,14 @@ app.post('/api/movimientos', async (req, res) => {
       mensaje: 'El monto debe ser un número positivo'
     });
   }
-  
+
   try {
     const fechaFinal = fecha || new Date().toISOString().split('T')[0];
     const [resultado] = await pool.query(
       'INSERT INTO movimientos (concepto, tipo, monto, fecha, contacto_id) VALUES (?, ?, ?, ?, ?)',
       [concepto, tipo, montoNumerico, fechaFinal, contacto_id || null]
     );
-    
+
     res.status(201).json({
       exito: true,
       mensaje: 'Movimiento registrado',
@@ -267,16 +282,9 @@ app.get('/api/resumen', async (req, res) => {
 
 // INICIAR SERVIDOR
 app.listen(PORT, () => {
-  console.log('=================================');
-  console.log('   SERVIDOR ERP CONTABLE (MYSQL) ');
-  console.log('=================================');
-  console.log(`Puerto: http://localhost:${PORT}`);
-  console.log('Base de Datos: erp_contable_jech');
-  console.log('Endpoints disponibles:');
-  console.log('  • GET    /api/contactos');
-  console.log('  • POST   /api/contactos');
-  console.log('  • GET    /api/movimientos');
-  console.log('  • POST   /api/movimientos');
-  console.log('  • GET    /api/resumen');
-  console.log('=================================');
+  console.log('╔════════════════════════════════════════╗');
+  console.log('║  SERVIDOR ERP CON MySQL ACTIVO        ║');
+  console.log('╚════════════════════════════════════════╝');
+  console.log(` Puerto: http://localhost:${PORT}`);
+  console.log(` Base de datos: erp_contable_jech`);  // ⚠ REEMPLAZA con tu BD 
 });
