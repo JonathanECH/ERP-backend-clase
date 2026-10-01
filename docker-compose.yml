@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: erp_mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: JonnyKey24
+      MYSQL_DATABASE: erp_contable_jech
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
